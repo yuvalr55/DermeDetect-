@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>table search</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+
+</head>
+<body>
+<div class="border border-primary">
+    <label class="col-2 col-form-label">name mission:
+        <input class="form-control" type="text" id="nameMission" placeholder="name mission">
+    </label>
+    <label class="col-2 col-form-label">status:
+        <select class="form-control" name="cars" id="status">
+            <option value="created">created</option>
+            <option value="in-process">in-process</option>
+            <option value="done">done</option>
+        </select>
+    </label>
+    <label class="col-2 col-form-label">id user:
+        <select class="form-control" id="idUser"></select>
+    </label>
+    <label class="col-2 col-form-label">
+        <input class="btn btn-primary" type="submit" value="add/edit mission" onclick="addMission()">
+    </label>
+
+    <label class="col-2 col-form-label">
+        id mission:
+        (Only if you change/edit a Mission*)
+        <input class="form-control" id="editor" type="number" min="1">
+    </label>
+</div>
+<div>
+    <table>
+    </table>
+</div>
+<div>
+    <label class="col-2 col-form-label">Remove Mission
+        <input class="form-control" id="deleteMission" type="number" min="1">
+    </label>
+    <label class="col-2 col-form-label">
+        <input value="delete" type="submit" class="btn btn-primary" onclick="dlt()">
+    </label>
+</div>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+
+<script>
+
+
+    allUsers = () => {
+        axios({
+            method: 'get',
+            url: 'http://127.0.0.1:8001/all_users',
+
+
+        })
+            .then(function (response) {
+                for (let i of response.data){
+                    let opt = document.createElement('option');
+                    opt.value = i.id_user;
+                    opt.innerHTML = `${i.id_user} - ${i.name} ${i.surname}`;
+                    document.getElementById('idUser').appendChild(opt);
+                    // console.log(i)
+
+                }
+            })
+
+            .catch(function (error) {
+                console.log(error);
+            });
+
+    }
+
+    addMission = () => {
+        const nameMission = document.getElementById('nameMission').value
+        const status = document.getElementById('status').value
+        const idUser = document.getElementById('idUser').value
+        const editor = document.getElementById('editor').value
+        if (nameMission && status && idUser && isNaN(parseInt(editor))) {
+            const addMission = {'name_mission': nameMission, 'status': status, 'id_user': idUser}
+            add(addMission)
+        } else {
+            const updateMission = {
+                'id_mission': editor,
+                'name_mission': nameMission,
+                'status': status,
+                'id_user': idUser
+            }
+            edit(updateMission)
+
+        }
+    }
+
+    window.onload = () => {
+        allUsers()
+        axios({
+            method: 'get',
+            url: 'http://127.0.0.1:8001/mission',
+
+
+        })
+            .then(function (response) {
+
+                addRows(response)
+
+            })
+
+            .catch(function (error) {
+                console.log(error);
+            });
+
+    }
+
+
+    add = (editMission) => {
+
+        axios({
+            method: 'post',
+            url: 'http://127.0.0.1:8001/add',
+            data: editMission
+        })
+            .then(function (response) {
+                addRows(response)
+
+
+            })
+
+            .catch(function (error) {
+                console.log(error);
+            });
+
+    }
+
+    edit = (updateMission) => {
+
+        axios({
+            method: 'post',
+            url: 'http://127.0.0.1:8001/update',
+            data: updateMission
+        })
+            .then(function (response) {
+                addRows(response)
+
+
+            })
+
+            .catch(function (error) {
+                console.log(error);
+            });
+
+    }
+
+    dlt = () => {
+        const dltMission = document.getElementById('deleteMission').value
+        axios({
+            method: 'post',
+            url: 'http://127.0.0.1:8001/delete',
+            data: {'id_mission': dltMission}
+        })
+            .then(function (response) {
+                addRows(response)
+
+
+            })
+
+            .catch(function (error) {
+                console.log(error);
+            });
+    }
+
+    addRows = (response) => {
+        let data = response.data
+        const rows = []
+        for (let i = 0; i < data.length; i++) {
+            rows.push({
+                "id_mission": data[i]['id_mission'], "name_mission": data[i]['name_mission'],
+                "status": data[i]['status'], "id_user": data[i]['id_user'], "name": data[i]['name'],
+                "surname": data[i]['surname'], "email": data[i]['email'], "birth_date": data[i]['birth_date']
+            });
+        }
+
+        $(document).ready(function () {
+            let html = "<table>";
+            html += "<th>id mission</td>";
+            html += "<th>name mission</td>";
+            html += "<th>status</td>";
+            html += "<th>id user</td>";
+            html += "<th>name</td>";
+            html += "<th>surname</td>";
+            html += "<th>email</td>";
+            html += "<th>birth date</td>";
+
+
+            for (let i = 0; i < rows.length; i++) {
+                html += "<tr>";
+                html += "<td>" + rows[i].id_mission + "</td>";
+                html += "<td>" + rows[i].name_mission + "</td>";
+                html += "<td>" + rows[i].status + "</td>";
+                html += "<td>" + rows[i].id_user + "</td>";
+                html += "<td>" + rows[i].name + "</td>";
+                html += "<td>" + rows[i].surname + "</td>";
+                html += "<td>" + rows[i].email + "</td>";
+                html += "<td>" + (rows[i].birth_date).substring(0, 10) + "</td>";
+
+
+                html += "</tr>";
+
+            }
+            html += "</table>";
+            $("table").html(html);
+        });
+    }
+</script>
+
+</body>
+</html>
